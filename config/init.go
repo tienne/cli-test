@@ -3,17 +3,27 @@ package config
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
-	"github.com/spf13/viper"
-	"io/ioutil"
 	"os"
-	"path"
+	"strings"
 )
 
 var (
-	configPath = ""
-	file       = "config"
-	ext        = "yaml"
+	prefixEnvName = "__MOZZET"
+	configPath    = ""
+	file          = "mozzet.db"
 )
+
+func init() {
+	initPath()
+
+	_ = os.Setenv(EnvName("PATH"), configPath)
+
+	fmt.Println(os.Getenv(EnvName("PATH")))
+}
+
+func EnvName(key string) string {
+	return prefixEnvName + "_" + strings.ToUpper(key)
+}
 
 func initPath() {
 	home, err := homedir.Dir()
@@ -27,29 +37,9 @@ func initPath() {
 }
 
 func InitConfig() {
-	initPath()
-
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		initConfigPath()
 	}
-
-	if _, err := os.Stat(configPath + "/" + file); os.IsNotExist(err) {
-		initConfigFile()
-	}
-	viper.SetConfigType(ext)
-	viper.AddConfigPath(configPath)
-	viper.SetConfigName(file)
-
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Can't read config:", err)
-		os.Exit(1)
-	}
-
-	viper.SetDefault("aaa", 123)
-
-	var config Config
-	viper.Unmarshal(&config)
-	fmt.Printf("%#v", config)
 }
 
 func ConfigPath() string {
@@ -63,17 +53,4 @@ func initConfigPath() {
 		fmt.Println("Config configPath Create Err:" + err.Error())
 		os.Exit(1)
 	}
-}
-
-func initConfigFile() {
-	err := ioutil.WriteFile(configFilePath(), []byte(""), 0644)
-
-	if err != nil {
-		fmt.Println("Config File Not Create Err:" + err.Error())
-		os.Exit(1)
-	}
-}
-
-func configFilePath() string {
-	return path.Join(configPath, file+"."+ext)
 }

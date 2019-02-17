@@ -15,6 +15,7 @@ var (
 )
 
 type DB struct {
+	home string
 	storm.DB
 }
 
