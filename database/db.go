@@ -2,21 +2,26 @@ package database
 
 import (
 	"fmt"
+	"github.com/mozzet/cli/env"
 	"path/filepath"
 	"time"
 
 	"github.com/asdine/storm"
-	"github.com/mozzet/cli/config"
 	bolt "go.etcd.io/bbolt"
 )
 
 var (
-	dbFile = "mozzet.db"
+	dbFile     = "mozzet.db"
+	enviroment env.Env
 )
 
 type DB struct {
 	home string
 	storm.DB
+}
+
+func init() {
+	enviroment = env.New("MOZZET")
 }
 
 func Execute(fn func(*DB) error) error {
@@ -30,9 +35,10 @@ func Execute(fn func(*DB) error) error {
 }
 
 func current() (*DB, error) {
-	home := config.ConfigPath()
+	home := enviroment.GetEnv("home")
 
 	path := filepath.Join(home, dbFile)
+	fmt.Println(path)
 	db, err := open(path)
 	if err != nil {
 		return nil, err
@@ -52,5 +58,12 @@ func open(path string) (*DB, error) {
 		return nil, fmt.Errorf("opening db at %s: %s (any awless existing process running?)", path, err)
 	}
 
-	return &DB{*stormDB}, nil
+	return &DB{filepath.Dir(path), *stormDB}, nil
+}
+
+func (db DB) Close() {
+	err := db.DB.Close()
+	if err != nil {
+		fmt.Println("db close error: " + err.Error())
+	}
 }

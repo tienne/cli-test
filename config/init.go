@@ -3,26 +3,22 @@ package config
 import (
 	"fmt"
 	"github.com/mitchellh/go-homedir"
+	"github.com/mozzet/cli/database"
+	"github.com/mozzet/cli/env"
 	"os"
-	"strings"
 )
 
 var (
-	prefixEnvName = "__MOZZET"
-	configPath    = ""
-	file          = "mozzet.db"
+	enviroment env.Env
+	configPath = ""
+	file       = "mozzet.db"
 )
 
 func init() {
 	initPath()
 
-	_ = os.Setenv(EnvName("PATH"), configPath)
-
-	fmt.Println(os.Getenv(EnvName("PATH")))
-}
-
-func EnvName(key string) string {
-	return prefixEnvName + "_" + strings.ToUpper(key)
+	enviroment = env.New("MOZZET")
+	enviroment.SetEnv("home", configPath)
 }
 
 func initPath() {
@@ -40,6 +36,8 @@ func InitConfig() {
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		initConfigPath()
 	}
+
+	initDatabase()
 }
 
 func ConfigPath() string {
@@ -53,4 +51,12 @@ func initConfigPath() {
 		fmt.Println("Config configPath Create Err:" + err.Error())
 		os.Exit(1)
 	}
+}
+
+func initDatabase() {
+	err := database.Execute(func(db *database.DB) error {
+		return db.Set("setting", "current.version", "aaa")
+	})
+
+	fmt.Println(err)
 }
