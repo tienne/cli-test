@@ -37,7 +37,9 @@ func InitConfig() {
 		initConfigPath()
 	}
 
-	initDatabase()
+	if _, err := os.Stat(configPath + "/" + file); os.IsNotExist(err) {
+		initDatabase()
+	}
 }
 
 func ConfigPath() string {
